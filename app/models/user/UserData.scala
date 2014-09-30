@@ -21,6 +21,16 @@ object UserData extends json.Formats {
 
   def find(authenticationData: AuthenticationData) = Await.result(findAsync(authenticationData), 10000.millisecond)
 
+  def findAsync(userInformationData: UserInformationData) = {
+    val collection = Mongo.db.collection[JSONCollection]("users")
+    val query = Json.obj("userInformationData" -> Json.toJson(userInformationData))
+    val userResult = collection.find(query).cursor[UserData].headOption
+    userResult
+  }
+
+  def find(userInformationData: UserInformationData) = Await.result(findAsync(userInformationData), 10000.millisecond)
+
+  
   def insert(userData: UserData) = {
     val collection = Mongo.db.collection[JSONCollection]("users")
     val query = Json.toJson(userData)

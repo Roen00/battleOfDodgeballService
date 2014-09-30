@@ -5,6 +5,7 @@
 # Home page
 GET    /               controllers.Login.login
 POST   /login          controllers.Login.authenticate
+GET    /signout        controllers.Login.signout
 GET    /panel          controllers.MainPanel.index
 GET    /register       controllers.Registration.register
 POST   /register       controllers.Registration.registerRequest

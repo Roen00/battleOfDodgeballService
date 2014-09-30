@@ -13,7 +13,7 @@ import play.modules.reactivemongo.MongoController
 object Registration extends Controller with MongoController with json.Formats {
 
   def register = Action {
-    Ok(views.html.register_page())
+    Ok(views.html.register.register_page())
   }
 
   def registerRequest = Action { implicit request =>
@@ -24,7 +24,7 @@ object Registration extends Controller with MongoController with json.Formats {
       }
       case None => {
         UserData.insert(userData)
-        Ok("Zarejestrowano pomyślnie")
+        Redirect(routes.MainPanel.index).withSession("email" -> userData.authenticationData.email)
       }
     }
   }

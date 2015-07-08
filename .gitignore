@@ -3,6 +3,7 @@
 *.log
 tmp
 dump
+.idea
  
 # Eclipse
 .settings

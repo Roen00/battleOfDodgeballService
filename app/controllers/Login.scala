@@ -1,13 +1,13 @@
 package controllers
 
-import forms.LoginForm
-import models.user.{UserData, UserInformationData}
+import forms.LoginForm._
+import models.user.UserInformationData
+import models.user.sync.UserData
 import play.api.Logger
 import play.api.mvc.{Action, BodyParser, Controller, Request, Result}
 
 object Login extends Controller {
 
-  import LoginForm._
 
   def login = Action { implicit request =>
     request.session.get("email") match {
@@ -41,12 +41,12 @@ object Login extends Controller {
     }
   }
 
-  def signout = Action {
-    redirectToLoginPage.withNewSession
-  }
-
   private def redirectToLoginPage: Result = {
     Redirect(routes.Login.login)
+  }
+
+  def signout = Action {
+    redirectToLoginPage.withNewSession
   }
 }
 

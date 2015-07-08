@@ -1,31 +1,25 @@
 package controllers
 
-import models.user.{AuthenticationData, UserData, UserInformationData}
-import play.api.data.Forms._
-import play.api.data._
+import forms.LoginForm
+import models.user.{UserData, UserInformationData}
+import play.api.Logger
 import play.api.mvc.{Action, BodyParser, Controller, Request, Result}
 
 object Login extends Controller {
 
-  implicit val get = Form(
-    mapping(
-      "email" -> email,
-      "password" -> nonEmptyText(3, 16))(AuthenticationData.apply)(AuthenticationData.unapply))
+  import LoginForm._
 
   def login = Action { implicit request =>
     request.session.get("email") match {
-      case Some(email) => {
-        Ok(views.html.panel.mainPanel(UserInformationData(email)))
-      }
+      case Some(email) => Ok(views.html.panel.mainPanel(UserInformationData(email)))
       case None => Ok(views.html.login.login_page(get))
     }
   }
 
   def authenticate = Action { implicit request =>
-
     get.bindFromRequest.fold(
       formWithErrors => {
-        println(formWithErrors.errors)
+        Logger.debug(s"authenticate [form errors]: ${formWithErrors.errors}")
         BadRequest(views.html.login.login_page(formWithErrors))
       },
       authenticationData => {

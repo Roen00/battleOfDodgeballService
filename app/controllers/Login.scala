@@ -1,20 +1,11 @@
 package controllers
 
-import scala.concurrent.ExecutionContext.Implicits.global
-import models.user.UserData
-import play.api.GlobalSettings
-import play.api.mvc.Action
-import play.api.mvc.Controller
-import play.modules.reactivemongo.MongoController
-import play.api.data._
+import models.user.{AuthenticationData, UserData, UserInformationData}
 import play.api.data.Forms._
-import play.api.data.validation.Constraints._
-import models.user.AuthenticationData
-import models.user.UserInformationData
-import play.api.mvc.BodyParser
-import play.api.mvc.Request
-import play.api.mvc.Result
-object Login extends Controller with MongoController with json.Formats {
+import play.api.data._
+import play.api.mvc.{Action, BodyParser, Controller, Request, Result}
+
+object Login extends Controller {
 
   implicit val get = Form(
     mapping(
@@ -51,14 +42,17 @@ object Login extends Controller with MongoController with json.Formats {
     Action(bp) { implicit request =>
       request.session.get("email") match {
         case Some("true") => f(request)
-        case _ => Redirect(routes.Login.login)
+        case _ => redirectToLoginPage
       }
     }
   }
 
   def signout = Action {
-    Redirect(routes.Login.login).withNewSession
+    redirectToLoginPage.withNewSession
   }
 
+  private def redirectToLoginPage: Result = {
+    Redirect(routes.Login.login)
+  }
 }
 

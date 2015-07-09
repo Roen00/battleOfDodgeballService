@@ -1,14 +1,15 @@
 package controllers
 
 import forms.LoginForm._
-import models.user.{UserData, UserInformationData}
+import models.user.{AuthenticationData, UserData, UserInformationData}
 import play.api.Logger
+import play.api.data.Form
 import play.api.mvc._
 
-import scala.concurrent.{Future, Await}
-import scala.concurrent.duration.DurationInt
-import  scala.concurrent.ExecutionContext.Implicits.global
-object Login extends Controller{
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+
+object Login extends Controller {
 
 
   def login = Action { implicit request =>
@@ -18,20 +19,21 @@ object Login extends Controller{
     }
   }
 
-  def authenticate = Action.async { implicit request =>
-    get.bindFromRequest.fold(
-      formWithErrors => {
-        Logger.debug(s"authenticate [form errors]: ${formWithErrors.errors}")
-        Future(BadRequest(views.html.login.login_page(formWithErrors)))
-      },
-      authenticationData => {
-        UserData.find(authenticationData).map(
-          _.map(_ =>
-            Redirect(routes.MainPanel.index).withSession("email" -> authenticationData.email)
-          ).getOrElse(Ok(views.html.login.login_page(get)))
-        )
-      }
-    )
+  def authenticate = Action.async { request =>
+    val hasErrors: (Form[AuthenticationData]) => Future[Result] = formWithErrors => {
+      Logger.debug(s"authenticate [form errors]: ${formWithErrors.errors}")
+      Future(BadRequest(views.html.login.login_page(formWithErrors)))
+    }
+
+    val login: (Option[UserData]) => Result = _.map(userData =>
+      Redirect(routes.MainPanel.index).withSession("email" -> userData.authenticationData.email)
+    ).getOrElse(Ok(views.html.login.login_page(get)))
+
+    val formWithoutErrors: (AuthenticationData) => Future[Result] = authenticationData => {
+      UserData.find(authenticationData).map(login)
+    }
+
+    get.bindFromRequest()(request).fold(hasErrors, formWithoutErrors)
   }
 
   def AuthorizedAction[A](bp: BodyParser[A])(f: Request[A] => Result): Action[A] = {

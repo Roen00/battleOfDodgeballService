@@ -1,12 +1,14 @@
 package controllers
 
 import forms.LoginForm._
-import models.user.UserInformationData
-import models.user.sync.UserData
+import models.user.{UserData, UserInformationData}
 import play.api.Logger
-import play.api.mvc.{Action, BodyParser, Controller, Request, Result}
+import play.api.mvc._
 
-object Login extends Controller {
+import scala.concurrent.{Future, Await}
+import scala.concurrent.duration.DurationInt
+import  scala.concurrent.ExecutionContext.Implicits.global
+object Login extends Controller{
 
 
   def login = Action { implicit request =>
@@ -16,20 +18,20 @@ object Login extends Controller {
     }
   }
 
-  def authenticate = Action { implicit request =>
+  def authenticate = Action.async { implicit request =>
     get.bindFromRequest.fold(
       formWithErrors => {
         Logger.debug(s"authenticate [form errors]: ${formWithErrors.errors}")
-        BadRequest(views.html.login.login_page(formWithErrors))
+        Future(BadRequest(views.html.login.login_page(formWithErrors)))
       },
       authenticationData => {
-        UserData.find(authenticationData) match {
-          case Some(result) => {
+        UserData.find(authenticationData).map(
+          _.map(_ =>
             Redirect(routes.MainPanel.index).withSession("email" -> authenticationData.email)
-          }
-          case None => Ok(views.html.login.login_page(get))
-        }
-      })
+          ).getOrElse(Ok(views.html.login.login_page(get)))
+        )
+      }
+    )
   }
 
   def AuthorizedAction[A](bp: BodyParser[A])(f: Request[A] => Result): Action[A] = {

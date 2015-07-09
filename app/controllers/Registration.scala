@@ -9,16 +9,16 @@ import play.api.data.Forms._
 import play.api.mvc._
 import play.api.mvc.Controller
 import play.modules.reactivemongo.MongoController
-
+import scala.concurrent.ExecutionContext.Implicits.global
 object Registration extends Controller with MongoController with json.Formats {
 
   def register = Action {
     Ok(views.html.register.register_page())
   }
 
-  def registerRequest = Action { implicit request =>
+  def registerRequest = Action.async { implicit request =>
     val userData = RegisterForm.get.bindFromRequest.get
-    UserData.find(userData.authenticationData) match {
+    UserData.find(userData.authenticationData).map {
       case Some(result) => {
         Ok("Konto jest już zarejestrowane")
       }
